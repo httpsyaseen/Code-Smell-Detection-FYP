@@ -17,8 +17,12 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "lucide-react";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 export default function page() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -31,17 +35,26 @@ export default function page() {
     setError(null);
 
     try {
-      // Here you would call your authentication service
-      // For example: await AuthService.login({ email, password });
-      console.log("Signing in with:", { email, password });
+      const response = await axios.post("http://localhost:3000/api/v1/login", {
+        email,
+        password,
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Redirect after successful login
-      // router.push('/dashboard');
+      if (response?.data?.status === "success") {
+        const { status, data } = response?.data;
+        const { user, token } = data;
+        console.log(user, token);
+        Cookies.set("token", token, { expires: 7 });
+        Cookies.set("user", JSON.stringify(user), { expires: 7 });
+        console.log("Login successful:", user);
+        router.push("/dashboard");
+        window.dispatchEvent(new Event("authChange"));
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error: any) {
-      setError(error.message || "Failed to sign in");
+      console.log(error);
+      setError(error.response?.data?.message || "Failed to sign in");
     } finally {
       setIsLoading(false);
     }

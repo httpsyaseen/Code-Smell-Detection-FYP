@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,29 +13,57 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Code, User, LogOut, Menu, X } from "lucide-react";
+import Cookies from "js-cookie";
+import Image from "next/image";
 
-interface DashboardHeaderProps {
-  isAuthenticated: boolean;
-}
-
-export default function DashboardHeader({
-  isAuthenticated,
-}: DashboardHeaderProps) {
+export default function DashboardHeader() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Function to check authentication state
+  const checkAuth = () => {
+    const token = Cookies.get("token");
+    const user = Cookies.get("user");
+    setIsAuthenticated(!!token);
+    setUserProfile(user ? JSON.parse(user).photo : "");
+  };
+
+  // Initial check and listen for auth changes
+  useEffect(() => {
+    checkAuth(); // Check on mount
+
+    // Listen for custom auth change event
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener("authChange", handleAuthChange);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("authChange", handleAuthChange);
+    };
+  }, []);
+
   const handleLogout = () => {
+    Cookies.remove("token");
+    Cookies.remove("user");
+    setIsAuthenticated(false);
+    setUserProfile(null);
     router.push("/login");
     setMobileMenuOpen(false);
+    window.dispatchEvent(new Event("authChange"));
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b  px-16 bg-white">
+    <header className="sticky top-0 z-50 w-full border-b px-16 bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Code className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-bold ">Code Scent</span>
+            <span className="text-xl font-bold">Code Scent</span>
           </Link>
         </div>
 
@@ -45,19 +73,19 @@ export default function DashboardHeader({
             <>
               <Link
                 href="/dashboard"
-                className="text-sm font-medium  hover:underline underline-offset-4"
+                className="text-sm font-medium hover:underline underline-offset-4"
               >
                 Dashboard
               </Link>
               <Link
-                href="/projects"
-                className="text-sm font-medium  hover:underline underline-offset-4"
+                href="/all-projects"
+                className="text-sm font-medium hover:underline underline-offset-4"
               >
                 Projects
               </Link>
               <Link
                 href="/upload"
-                className="text-sm font-medium  hover:underline underline-offset-4"
+                className="text-sm font-medium hover:underline underline-offset-4"
               >
                 Upload
               </Link>
@@ -68,7 +96,15 @@ export default function DashboardHeader({
                     size="icon"
                     className="rounded-full hover:bg-blue-100"
                   >
-                    <User className="h-5 w-5 " />
+                    {userProfile ? (
+                      <img
+                        src={userProfile}
+                        alt="User Profile"
+                        className="h-10 w-10 object-cover rounded-full shadow-sm"
+                      />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
                     <span className="sr-only">User menu</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -76,24 +112,20 @@ export default function DashboardHeader({
                   align="end"
                   className="bg-white border border-blue-100"
                 >
-                  <DropdownMenuLabel className=" font-semibold">
+                  <DropdownMenuLabel className="font-semibold">
                     My Account
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/profile" className="">
-                      Profile
-                    </Link>
+                    <Link href="/dashboard/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings" className="">
-                      Settings
-                    </Link>
+                    <Link href="/dashboard/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="">
-                    <span>Logout</span>
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -126,7 +158,6 @@ export default function DashboardHeader({
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-blue-100 p-4 space-y-4 bg-blue-50">
-          CIS-{" "}
           {isAuthenticated ? (
             <>
               <Link
@@ -167,10 +198,7 @@ export default function DashboardHeader({
               <Button
                 variant="ghost"
                 className="w-full justify-start pl-0 text-blue-800 hover:bg-blue-100 hover:underline"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
+                onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>

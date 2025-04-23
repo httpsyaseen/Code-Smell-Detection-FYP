@@ -25,15 +25,22 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 export default function Page() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Username check states
@@ -53,11 +60,11 @@ export default function Page() {
 
     const delayDebounce = setTimeout(async () => {
       try {
-        // const res = await fetch(`/api/check-username?username=${username}`);
-        // let data = await res.json();
-        const data = {
-          available: false,
-        };
+        const res = await fetch(
+          `http://localhost:3000/api/v1/check-username/${username}`
+        );
+        const data = await res.json();
+        console.log(data);
         if (data.available) {
           setUsernameStatus("available");
           setUsernameMsg("Username is available");
@@ -66,6 +73,7 @@ export default function Page() {
           setUsernameMsg("Username is already taken");
         }
       } catch (err) {
+        console.log(err);
         setUsernameStatus("taken");
         setUsernameMsg("Error checking username");
       }
@@ -74,15 +82,41 @@ export default function Page() {
     return () => clearTimeout(delayDebounce);
   }, [username]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      // Simulate signup process
-      console.log("Signing up with:", { name, username, email, password });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Create FormData from the form element
+      const formData = new FormData(e.currentTarget);
+      // Ensure photo is included if selected
+      if (photo) {
+        formData.set("photo", photo); // Use set to ensure single file
+      }
+
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/signup",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response?.data?.status === "success") {
+        const { data } = response;
+        const { user, token } = data.data;
+        console.log(user, token);
+        Cookies.set("token", token, { expires: 7 });
+        Cookies.set("user", JSON.stringify(user), { expires: 7 });
+        console.log("Signup successful:", user);
+        router.push("/dashboard");
+        window.dispatchEvent(new Event("authChange"));
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (error: any) {
       setError(error.message || "Failed to sign up");
     } finally {
@@ -91,7 +125,7 @@ export default function Page() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100 ">
+    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100">
       <Card className="w-md shadow-lg border-0">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-2xl font-bold text-center">
@@ -108,27 +142,6 @@ export default function Page() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
-                  <UserIcon className="h-4 w-4" />
-                </div>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
-
             {/* Username */}
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
@@ -138,6 +151,7 @@ export default function Page() {
                 </div>
                 <Input
                   id="username"
+                  name="username"
                   type="text"
                   placeholder="johndoe123"
                   value={username}
@@ -173,6 +187,27 @@ export default function Page() {
               )}
             </div>
 
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                  <UserIcon className="h-4 w-4" />
+                </div>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="pl-10"
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -182,6 +217,7 @@ export default function Page() {
                 </div>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="name@example.com"
                   value={email}
@@ -190,6 +226,62 @@ export default function Page() {
                   disabled={isLoading}
                   required
                 />
+              </div>
+            </div>
+
+            {/* Upload Photo */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="photo"
+                className="text-sm font-medium text-gray-700"
+              >
+                Upload Photo
+              </Label>
+              <div className="relative flex items-center gap-4 p-4 bg-gray-50 border border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+                <Input
+                  id="photo"
+                  name="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      setPhoto(file);
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        if (reader.result) {
+                          setPhotoPreview(reader.result.toString());
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    } else {
+                      setPhoto(null);
+                      setPhotoPreview(null);
+                    }
+                  }}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="photo"
+                  className={`flex-1 cursor-pointer text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-md border border-blue-200 hover:bg-blue-100 transition-colors ${
+                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  Choose Image
+                </label>
+                {photoPreview && (
+                  <img
+                    src={photoPreview}
+                    alt="Photo preview"
+                    className="h-16 w-16 object-cover rounded-md shadow-sm"
+                  />
+                )}
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-lg">
+                    <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -202,6 +294,7 @@ export default function Page() {
                 </div>
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
@@ -232,22 +325,46 @@ export default function Page() {
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isLoading}
-                required
-              />
+              <Label htmlFor="passwordConfirm">Confirm Password</Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+                  <LockIcon className="h-4 w-4" />
+                </div>
+                <Input
+                  id="passwordConfirm"
+                  name="passwordConfirm"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  className="pl-10"
+                  disabled={isLoading}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOffIcon className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">
+                    {showConfirmPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col mt-4 gap-4">
             <Button
               type="submit"
-              className="w-full bg-[#126ed3] curor-pointer hover:bg-[#126ed3]"
+              className="w-full bg-[#126ed3] cursor-pointer hover:bg-[#126ed3]"
               disabled={isLoading}
             >
               {isLoading ? "Creating account..." : "Create account"}
