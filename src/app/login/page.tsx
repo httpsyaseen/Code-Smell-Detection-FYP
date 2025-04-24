@@ -35,10 +35,13 @@ export default function page() {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:3000/api/v1/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/user/login",
+        {
+          email,
+          password,
+        }
+      );
 
       if (response?.data?.status === "success") {
         const { status, data } = response?.data;

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Search, Upload, X, ArrowLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import Cookies from "js-cookie";
 
 export default function UploadProjectPage() {
   const router = useRouter();
@@ -30,6 +31,9 @@ export default function UploadProjectPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +41,7 @@ export default function UploadProjectPage() {
     projectName?: string;
     projectDescription?: string;
     file?: string;
+    submission?: string;
   }>({});
 
   // Handle file selection
@@ -73,10 +78,15 @@ export default function UploadProjectPage() {
     }
   };
 
-  // Handle searching for users
+  // Handle searching for users with debounce
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
+
+    // Clear any existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
 
     if (value.length < 2) {
       setSearchResults([]);
@@ -85,48 +95,60 @@ export default function UploadProjectPage() {
 
     setIsSearching(true);
 
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      // Mock search results based on input
-      const results = [
-        {
-          id: 101,
-          name: "John Doe",
-          username: value + "john",
-          avatar: "/placeholder.svg",
-        },
-        {
-          id: 102,
-          name: "Jane Smith",
-          username: value + "jane",
-          avatar: "/placeholder.svg",
-        },
-        {
-          id: 103,
-          name: "Robert Johnson",
-          username: value + "robert",
-          avatar: "/placeholder.svg",
-        },
-      ].filter(
-        (user) =>
-          !selectedMembers.some((member) => member.id === user.id) &&
-          (user.name.toLowerCase().includes(value.toLowerCase()) ||
-            user.username.toLowerCase().includes(value.toLowerCase()))
+    // Set a new timeout for 2 seconds
+    const timeout = setTimeout(() => {
+      fetchUsers(value);
+    }, 2000);
+
+    setSearchTimeout(timeout);
+  };
+
+  // Fetch users from localhost API
+  const fetchUsers = async (query: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/v1/user/userinfo/${query}`
       );
 
-      setSearchResults(results);
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      console.log("Fetched users:", data);
+
+      // Check if data.user is an array or single object
+      if (data.user) {
+        if (Array.isArray(data.user)) {
+          setSearchResults(data.user);
+        } else {
+          // If it's a single user object, put it in an array
+          setSearchResults([data.user]);
+        }
+      } else {
+        setSearchResults([]);
+      }
+
       setIsSearching(false);
-    }, 500);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+      setIsSearching(false);
+    }
   };
 
   // Add a member to the team
   const addMember = (user: any) => {
-    setSelectedMembers([...selectedMembers, user]);
-    setSearchResults(searchResults.filter((result) => result.id !== user.id));
+    // Check if member is already selected
+    if (!selectedMembers.some((member) => member.id === user.id)) {
+      setSelectedMembers([...selectedMembers, user]);
+      // Filter out the added user from search results
+      setSearchResults(searchResults.filter((result) => result.id !== user.id));
+    }
   };
 
   // Remove a member from the team
-  const removeMember = (userId: number) => {
+  const removeMember = (userId: string) => {
     setSelectedMembers(
       selectedMembers.filter((member) => member.id !== userId)
     );
@@ -157,7 +179,7 @@ export default function UploadProjectPage() {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -166,20 +188,74 @@ export default function UploadProjectPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Get token from cookies
+      const token = Cookies.get("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append("name", projectName);
+      formData.append("description", projectDescription);
+      if (selectedFile) {
+        formData.append("project", selectedFile);
+      }
+
+      // Add members IDs
+      const memberIds = selectedMembers.map((member) => member.id);
+      formData.append("members", JSON.stringify(memberIds));
+
+      console.log("Form Data:", formData);
+
+      // Send the request
+      const response = await fetch(
+        "http://localhost:3000/api/v1/project/create-project",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create project");
+      }
+
+      // Redirect to the project page on success
+      const projectData = await response.json();
+      router.push(`/report/${projectData.project._id}`);
+    } catch (error: any) {
+      console.error("Error creating project:", error);
+      setErrors((prev) => ({
+        ...prev,
+        submission:
+          error.message || "Failed to create project. Please try again.",
+      }));
       setIsSubmitting(false);
-      // Redirect to the project page
-      router.push("/");
-    }, 2000);
+    }
   };
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
 
   return (
     <div className="container py-8 max-w-xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Link href="/">
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            {/* <ArrowLeft className="h-4 w-4" /> */}
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <h1 className="text-2xl font-bold">Upload New Project</h1>
@@ -314,7 +390,7 @@ export default function UploadProjectPage() {
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage
-                                    src={user.avatar || "/placeholder.svg"}
+                                    src={user.photo || "/placeholder.svg"}
                                     alt={user.name}
                                   />
                                   <AvatarFallback>
@@ -326,7 +402,11 @@ export default function UploadProjectPage() {
                                     {user.name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    @{user.username}
+                                    @
+                                    {user.username ||
+                                      user.name
+                                        .toLowerCase()
+                                        .replace(/\s+/g, "_")}
                                   </p>
                                 </div>
                               </div>
@@ -370,7 +450,7 @@ export default function UploadProjectPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
                             <AvatarImage
-                              src={member.avatar || "/placeholder.svg"}
+                              src={member.photo || "/placeholder.svg"}
                               alt={member.name}
                             />
                             <AvatarFallback>
@@ -380,7 +460,9 @@ export default function UploadProjectPage() {
                           <div>
                             <p className="text-sm font-medium">{member.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              @{member.username}
+                              @
+                              {member.username ||
+                                member.name.toLowerCase().replace(/\s+/g, "_")}
                             </p>
                           </div>
                         </div>
@@ -400,6 +482,12 @@ export default function UploadProjectPage() {
             </div>
           </CardContent>
         </Card>
+
+        {errors.submission && (
+          <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+            {errors.submission}
+          </div>
+        )}
 
         <Button
           type="submit"

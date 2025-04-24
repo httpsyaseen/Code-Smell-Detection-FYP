@@ -34,42 +34,66 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CodeSmellPieChart from "@/components/dashboard/custom-piechart";
+import { useParams, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 export default function ReportPage() {
+  const params = useParams();
+  const id = params.id;
   const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState(null);
-  const [projectName, setProjectName] = useState("E-commerce Platform");
-  const [members, setMembers] = useState(["john_doe", "jane_smith"]);
-  const [searchUsername, setSearchUsername] = useState("");
+  const [file, setFile] = useState({});
+  const [project, setProject] = useState(null);
+  const [isLoading, setisLoading] = useState("");
 
-  const projectData = {
-    name: projectName,
-    version: "v2.3.4",
-    lastScan: "2 hours ago",
-    totalFiles: 342,
-    affectedFiles: 87,
-    totalCodeSmells: 104,
-    codeQuality: 76,
-    codeSmells: [
-      { name: "Duplicate Code", value: 32 },
-      { name: "Long Method", value: 24 },
-      { name: "Complex Conditional", value: 18 },
-      { name: "Dead Code", value: 14 },
-      { name: "Large Class", value: 9 },
-      { name: "Feature Envy", value: 7 },
-    ],
-  };
+  useEffect(() => {
+    const fetchProject = async () => {
+      setisLoading(true);
+      try {
+        console.log("this is id", id);
+        const response = await fetch(
+          `http://localhost:3000/api/v1/project/get-project/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Cookies.get("token")}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        console.log(data.project);
+        setProject(data.project);
+      } catch (error) {
+        console.error("Error fetching project:", error);
+      } finally {
+        setisLoading(false);
+      }
+    };
+    fetchProject();
+  }, [id]);
 
-  const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#8884D8",
-    "#FF6B6B",
-  ];
+  // const projectData = {
+  //   name: projectName,
+  //   version: "v2.3.4",
+  //   lastScan: "2 hours ago",
+  //   totalFiles: 342,
+  //   affectedFiles: 87,
+  //   totalCodeSmells: 104,
+  //   codeQuality: 76,
+  //   codeSmells: [
+  //     { name: "Duplicate Code", value: 32 },
+  //     { name: "Long Method", value: 24 },
+  //     { name: "Complex Conditional", value: 18 },
+  //     { name: "Dead Code", value: 14 },
+  //     { name: "Large Class", value: 9 },
+  //     { name: "Feature Envy", value: 7 },
+  //   ],
+  // };
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -87,31 +111,21 @@ export default function ReportPage() {
       }, 2000);
     }
   };
-
-  const handleAddMember = () => {
-    if (searchUsername && !members.includes(searchUsername)) {
-      setMembers([...members, searchUsername]);
-      setSearchUsername("");
-    }
-  };
-
-  const handleRemoveMember = (member) => {
-    setMembers(members.filter((m) => m !== member));
-  };
-
-  const handleUpdateProject = () => {
-    // Here you would typically send the updated project data to your backend
-    console.log("Updating project with name:", projectName);
-    console.log("Updated members:", members);
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="loader"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container py-8 mx-auto px-16">
+    <div className="container py-8 mx-auto px-16 ">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{projectData.name}</h1>
+          <h1 className="text-2xl font-bold">{project?.title}</h1>
           <Badge variant="outline" className="ml-2">
-            {projectData.version}
+            version: {project?.latestVersion?.version}
           </Badge>
         </div>
         <div className="flex items-center gap-3">
@@ -171,7 +185,9 @@ export default function ReportPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectData.totalFiles}</div>
+            <div className="text-2xl font-bold">
+              {project?.latestVersion?.report?.totalFiles}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -183,7 +199,7 @@ export default function ReportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projectData.totalCodeSmells}
+              {project?.latestVersion?.report?.totalSmells}
             </div>
           </CardContent>
         </Card>
@@ -196,11 +212,13 @@ export default function ReportPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projectData.affectedFiles}
+              {project?.latestVersion?.report?.AffectedFiles}
             </div>
             <p className="text-xs text-muted-foreground">
               {Math.round(
-                (projectData.affectedFiles / projectData.totalFiles) * 100
+                (project?.latestVersion?.report?.AffectedFiles /
+                  project?.latestVersion?.report?.totalFiles) *
+                  100
               )}
               % of total files
             </p>
@@ -212,13 +230,15 @@ export default function ReportPage() {
             <BarChart2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectData.codeQuality}%</div>
-            <Progress value={projectData.codeQuality} className="mt-2" />
+            <div className="text-2xl font-bold">{10}%</div>
+            <Progress value={20} className="mt-2" />
           </CardContent>
         </Card>
       </div>
 
-      <CodeSmellPieChart />
+      <CodeSmellPieChart
+        chartData={project?.latestVersion?.report?.chartData}
+      />
     </div>
   );
 }

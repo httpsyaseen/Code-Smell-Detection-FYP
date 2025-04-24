@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { TooltipProps } from "recharts";
 const codeSmellTypes = [
-  { name: "Duplicate Code", value: 35, color: "#0d9488" }, // teal-600
+  { codeSmellName: "Duplicate Code", value: 35, color: "#0d9488" }, // teal-600
   { name: "Long Method", value: 25, color: "#8b5cf6" }, // purple-500
   { name: "Complex Conditional", value: 18, color: "#f97316" }, // orange-500
   { name: "Dead Code", value: 12, color: "#ec4899" }, // pink-500
   { name: "Large Class", value: 10, color: "#22c55e" }, // green-500
 ];
-
-import { TooltipProps } from "recharts";
 
 const CustomTooltip = ({ active, payload }: TooltipProps<any, any>) => {
   if (active && payload && payload.length) {
@@ -30,8 +28,20 @@ const CustomTooltip = ({ active, payload }: TooltipProps<any, any>) => {
   return null;
 };
 
-export default function CodeSmellPieChart() {
+interface chartDatatype {
+  codeSmellName: string;
+  value: number;
+  color: string;
+}
+
+export default function CodeSmellPieChart({
+  chartData,
+}: {
+  chartData: chartDatatype[];
+}) {
   const [isMobile, setIsMobile] = useState(false);
+  console.log("chartData", chartData);
+  const codeSmellTypes = chartData;
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,11 +73,13 @@ export default function CodeSmellPieChart() {
                   innerRadius={isMobile ? 60 : 70}
                   dataKey="value"
                   cornerRadius={15}
-                  nameKey="name"
-                  label={({ name, percent }) =>
+                  nameKey="codeSmellName"
+                  label={({ codeSmellName, value, percent }) =>
                     isMobile
                       ? `${(percent * 100).toFixed(0)}%`
-                      : `${(percent * 100).toFixed(0)}%`
+                      : `${codeSmellName} (${value})    ${(
+                          percent * 100
+                        ).toFixed(0)}%`
                   }
                   labelLine={!isMobile} // Remove label line in mobile
                 >
@@ -89,7 +101,7 @@ export default function CodeSmellPieChart() {
                   className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 ></div>
-                <span>{entry.name}</span>
+                <span>{entry.codeSmellName}</span>
               </div>
             ))}
           </div>
