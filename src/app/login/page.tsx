@@ -64,8 +64,8 @@ export default function page() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100 ">
-      <Card className="w-md shadow-lg border-0">
+    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100 dark:bg-[#040820] ">
+      <Card className="w-md shadow-lg border-0 dark:bg-[#0F172A]">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-2xl font-bold text-center">
             Sign In
@@ -94,7 +94,7 @@ export default function page() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -121,7 +121,7 @@ export default function page() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -129,7 +129,7 @@ export default function page() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent "
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
@@ -148,7 +148,7 @@ export default function page() {
           <CardFooter className="flex flex-col space-y-4 mt-4">
             <Button
               type="submit"
-              className="w-full bg-[#126ed3] hover:bg-[#126ed3] cursor-pointer"
+              className="w-full bg-[#126ed3] hover:bg-[#126ed3] cursor-pointer "
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign in"}

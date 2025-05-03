@@ -251,8 +251,8 @@ export default function UploadProjectPage() {
   }, [searchTimeout]);
 
   return (
-    <div className="container py-8 max-w-xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
+    <div className="container py-8  mx-auto dark:bg-[#040820]">
+      <div className="flex items-center gap-2 mb-6 max-w-xl mx-auto">
         <Link href="/">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
@@ -261,8 +261,8 @@ export default function UploadProjectPage() {
         <h1 className="text-2xl font-bold">Upload New Project</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <Card>
+      <form onSubmit={handleSubmit} className="space-y-8 max-w-xl mx-auto ">
+        <Card className="dark:bg-[#0f142a]">
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -273,7 +273,10 @@ export default function UploadProjectPage() {
                   id="project-name"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className={errors.projectName ? "border-destructive" : ""}
+                  className={`${
+                    errors.projectName && "border-destructive"
+                  } dark:bg-[#E5EFFF0D] dark:placeholder:text-[#E5EFFFAD]`}
+                  placeholder="E-commerce Website"
                 />
                 {errors.projectName && (
                   <p className="text-sm text-destructive">
@@ -290,8 +293,9 @@ export default function UploadProjectPage() {
                   id="project-description"
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
+                  placeholder="A brief description of the project..."
                   className={cn(
-                    "min-h-[100px]",
+                    "min-h-[100px] dark:bg-[#E5EFFF0D] dark:placeholder:text-[#E5EFFFAD]",
                     errors.projectDescription ? "border-destructive" : ""
                   )}
                 />
@@ -305,7 +309,7 @@ export default function UploadProjectPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-[#0f142a]">
           <CardContent className="pt-6">
             <div className="space-y-4">
               <Label>
@@ -314,7 +318,7 @@ export default function UploadProjectPage() {
 
               <div
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors dark:bg-[#E5EFFF0D] dark:placeholder:text-white",
                   isDragging
                     ? "border-primary bg-primary/5"
                     : "border-muted-foreground/25 hover:border-primary/50",
@@ -355,7 +359,7 @@ export default function UploadProjectPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="dark:bg-[#0f142a]">
           <CardContent className="pt-6">
             <div className="space-y-4">
               <Label>Team Members</Label>
@@ -364,7 +368,7 @@ export default function UploadProjectPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users by username..."
-                  className="pl-9"
+                  className="pl-9 dark:bg-[#E5EFFF0D] dark:placeholder:text-white"
                   value={searchQuery}
                   onChange={handleSearch}
                 />
@@ -372,22 +376,22 @@ export default function UploadProjectPage() {
 
               {/* Search Results */}
               {searchQuery.length > 1 && (
-                <Card className="mt-2 overflow-hidden">
+                <Card className="mt-2 overflow-hidden dark:bg-[#3a4255]">
                   <CardContent className="p-0">
                     {isSearching ? (
                       <div className="flex items-center justify-center py-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                       </div>
                     ) : searchResults.length > 0 ? (
-                      <ScrollArea className="max-h-[200px]">
-                        <div className="p-2">
+                      <ScrollArea className="max-h-[200px] dark:bg-[#3a4255]">
+                        <div className="p-2 dark:bg-[#3a4255]">
                           {searchResults.map((user) => (
                             <div
                               key={user.id}
-                              className="flex items-center justify-between rounded-md p-2 cursor-pointer hover:bg-muted"
+                              className="flex items-center justify-between rounded-md p-2 cursor-pointer hover:bg-muted dark:bg-[#0F172A]"
                               onClick={() => addMember(user)}
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3 ">
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage
                                     src={user.photo || "/placeholder.svg"}
@@ -422,11 +426,11 @@ export default function UploadProjectPage() {
                         </div>
                       </ScrollArea>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-4 text-center">
-                        <p className="text-sm text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center py-4 text-center dark:text-white">
+                        <p className="text-sm text-muted-foreground dark:text-white">
                           No users found
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 dark:text-white">
                           Try a different search term
                         </p>
                       </div>
@@ -437,7 +441,7 @@ export default function UploadProjectPage() {
 
               {/* Selected Members */}
               {selectedMembers.length > 0 && (
-                <div className="mt-4">
+                <div className="mt-4 ]">
                   <h3 className="text-sm font-medium mb-2">
                     Selected Members ({selectedMembers.length})
                   </h3>
@@ -445,9 +449,9 @@ export default function UploadProjectPage() {
                     {selectedMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between rounded-md border p-2"
+                        className="flex items-center justify-between rounded-md border p-2 dark:bg-[#040820]"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 ">
                           <Avatar className="h-8 w-8">
                             <AvatarImage
                               src={member.photo || "/placeholder.svg"}
@@ -491,7 +495,7 @@ export default function UploadProjectPage() {
 
         <Button
           type="submit"
-          className="px-10 py-2 w-full mx-auto"
+          className="px-10 py-2 w-full mx-auto dark:bg-[#126ed3] cursor-pointer dark:text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? (

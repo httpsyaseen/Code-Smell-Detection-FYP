@@ -15,6 +15,7 @@ import {
 import { Code, User, LogOut, Menu, X } from "lucide-react";
 import Cookies from "js-cookie";
 import Image from "next/image";
+import { ModeToggle } from "./theme-togle";
 
 export default function DashboardHeader() {
   const router = useRouter();
@@ -57,8 +58,10 @@ export default function DashboardHeader() {
     window.dispatchEvent(new Event("authChange"));
   };
 
+  console.log(userProfile);
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b px-16 bg-white">
+    <header className="dark:bg-[#171b35]  sticky top-0 z-50 w-full border-b px-16 bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
@@ -69,23 +72,24 @@ export default function DashboardHeader() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
+          <ModeToggle />
           {isAuthenticated ? (
             <>
               <Link
                 href="/dashboard"
-                className="text-sm font-medium hover:underline underline-offset-4"
+                className="text-sm font-medium  underline-offset-4"
               >
                 Dashboard
               </Link>
               <Link
                 href="/all-projects"
-                className="text-sm font-medium hover:underline underline-offset-4"
+                className="text-sm font-medium  underline-offset-4"
               >
                 Projects
               </Link>
               <Link
                 href="/upload"
-                className="text-sm font-medium hover:underline underline-offset-4"
+                className="text-sm font-medium  underline-offset-4"
               >
                 Upload
               </Link>
@@ -94,7 +98,7 @@ export default function DashboardHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full hover:bg-blue-100"
+                    className="rounded-full cursor-pointer"
                   >
                     {userProfile ? (
                       <img
@@ -103,15 +107,12 @@ export default function DashboardHeader() {
                         className="h-10 w-10 object-cover rounded-full shadow-sm"
                       />
                     ) : (
-                      <User className="h-5 w-5" />
+                      <User className="h-5 w-5 " color="white" />
                     )}
                     <span className="sr-only">User menu</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="bg-white border border-blue-100"
-                >
+                <DropdownMenuContent align="end" className=" dark:bg-[#040820]">
                   <DropdownMenuLabel className="font-semibold">
                     My Account
                   </DropdownMenuLabel>
@@ -123,7 +124,10 @@ export default function DashboardHeader() {
                     <Link href="/dashboard/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>
                   </DropdownMenuItem>
@@ -133,7 +137,7 @@ export default function DashboardHeader() {
           ) : (
             <Link
               href="/login"
-              className="text-sm font-medium bg-blue-500 px-4 py-2 rounded-md text-white hover:underline underline-offset-4"
+              className="text-sm font-medium bg-[#126ed3] px-4 py-2 rounded-md text-white  underline-offset-4"
             >
               Login
             </Link>
@@ -162,42 +166,42 @@ export default function DashboardHeader() {
             <>
               <Link
                 href="/dashboard"
-                className="block py-2 text-blue-800 hover:underline"
+                className="block py-2 text-blue-800 "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/projects"
-                className="block py-2 text-blue-800 hover:underline"
+                className="block py-2 text-blue-800 "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Projects
               </Link>
               <Link
                 href="/dashboard/upload"
-                className="block py-2 text-blue-800 hover:underline"
+                className="block py-2 text-blue-800 "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Upload
               </Link>
               <Link
                 href="/dashboard/profile"
-                className="block py-2 text-blue-800 hover:underline"
+                className="block py-2 text-blue-800 "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Profile
               </Link>
               <Link
                 href="/dashboard/settings"
-                className="block py-2 text-blue-800 hover:underline"
+                className="block py-2 text-blue-800 "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Settings
               </Link>
               <Button
                 variant="ghost"
-                className="w-full justify-start pl-0 text-blue-800 hover:bg-blue-100 hover:underline"
+                className="w-full justify-start pl-0 text-blue-800 hover:bg-blue-100 "
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -207,7 +211,7 @@ export default function DashboardHeader() {
           ) : (
             <Link
               href="/login"
-              className="block py-2 text-blue-800 hover:underline"
+              className="block py-2 text-blue-800 "
               onClick={() => setMobileMenuOpen(false)}
             >
               Login

@@ -34,14 +34,20 @@ interface chartDatatype {
   color: string;
 }
 
+const NoCodeSmell = {
+  codeSmellName: "No Code Smell",
+  value: 1,
+  color: "#d1d5db",
+};
+
 export default function CodeSmellPieChart({
-  chartData,
+  chartData = [NoCodeSmell], // Default dummy value
 }: {
   chartData: chartDatatype[];
 }) {
   const [isMobile, setIsMobile] = useState(false);
-  console.log("chartData", chartData);
-  const codeSmellTypes = chartData;
+
+  const codeSmellTypes = chartData.length > 0 ? chartData : [NoCodeSmell];
 
   useEffect(() => {
     const handleResize = () => {
@@ -54,7 +60,7 @@ export default function CodeSmellPieChart({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   return (
-    <Card className="border-blue-100 shadow-md w-[400px] md:w-full">
+    <Card className="dark:bg-[#0f162b] shadow-md w-[400px] md:w-full">
       <CardHeader>
         <CardTitle className="text-xl font-bold">
           Code Smell Distribution

@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,53 +35,64 @@ import {
   UserPlus,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 export default function SettingsPage() {
-  // Project data state
-  const [projectName, setProjectName] = useState("E-commerce Platform");
-  const [projectDescription, setProjectDescription] = useState(
-    "Main e-commerce platform codebase with customer-facing storefront, admin dashboard, and inventory management system. Built with Next.js, TypeScript, and MongoDB."
-  );
+  const params = useParams();
+  const { id } = params;
 
-  // Team members state
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      id: 1,
-      name: "Alex Johnson",
-      username: "alexj",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      name: "Maria Garcia",
-      username: "mariag",
-      avatar: "/placeholder.svg",
-    },
-    { id: 3, name: "Sam Taylor", username: "samt", avatar: "/placeholder.svg" },
-    {
-      id: 4,
-      name: "Jamie Lee",
-      username: "jamiel",
-      avatar: "/placeholder.svg",
-    },
-  ]);
+  // Define a single state to hold all project details
+  const [project, setProject] = useState({
+    name: "",
+    description: "",
+    teamMembers: [],
+  });
 
-  // Remove member dialog state
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{
     id: number;
     name: string;
   } | null>(null);
 
-  // Add member dialog state
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  // Save changes state
   const [isSaving, setIsSaving] = useState(false);
+
+  const router = useRouter();
+
+  // Fetch project details based on the `id`
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      try {
+        // Make the API request to fetch project details (replace the URL with your API endpoint)
+        const response = await fetch(
+          `http://localhost:3000/api/v1/project/get-project-settings/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Cookies.get("token")}`,
+            },
+          }
+        );
+        const data = await response.json();
+        console.log("Project data:", data);
+        // Set the project state with the fetched data
+        setProject({
+          name: data.project.title,
+          description: data.project.description,
+          teamMembers: data.project.members,
+        });
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+      }
+    };
+
+    fetchProjectDetails();
+  }, [id]);
 
   // Handle removing a team member
   const handleRemoveMember = (member: { id: number; name: string }) => {
@@ -92,9 +103,12 @@ export default function SettingsPage() {
   // Confirm removing a team member
   const confirmRemoveMember = () => {
     if (memberToRemove) {
-      setTeamMembers(
-        teamMembers.filter((member) => member.id !== memberToRemove.id)
-      );
+      setProject({
+        ...project,
+        teamMembers: project.teamMembers.filter(
+          (member) => member.id !== memberToRemove.id
+        ),
+      });
       setRemoveDialogOpen(false);
       setMemberToRemove(null);
     }
@@ -136,7 +150,7 @@ export default function SettingsPage() {
         },
       ].filter(
         (user) =>
-          !teamMembers.some((member) => member.id === user.id) &&
+          !project.teamMembers.some((member) => member.id === user.id) &&
           (user.name.toLowerCase().includes(value.toLowerCase()) ||
             user.username.toLowerCase().includes(value.toLowerCase()))
       );
@@ -148,7 +162,10 @@ export default function SettingsPage() {
 
   // Add a member to the team
   const addMember = (user: any) => {
-    setTeamMembers([...teamMembers, user]);
+    setProject({
+      ...project,
+      teamMembers: [...project.teamMembers, user],
+    });
     setAddMemberDialogOpen(false);
     setSearchQuery("");
     setSearchResults([]);
@@ -164,16 +181,6 @@ export default function SettingsPage() {
       // Here you would normally save the project data to your backend
     }, 1000);
   };
-
-  // Reset search when dialog closes
-  const handleDialogOpenChange = (open: boolean) => {
-    setAddMemberDialogOpen(open);
-    if (!open) {
-      setSearchQuery("");
-      setSearchResults([]);
-    }
-  };
-  const router = useRouter();
 
   // Function to go back to the previous page
   const handleBack = () => {
@@ -206,16 +213,20 @@ export default function SettingsPage() {
                 <Label htmlFor="project-name">Project Name</Label>
                 <Input
                   id="project-name"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
+                  value={project.name}
+                  onChange={(e) =>
+                    setProject({ ...project, name: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="project-description">Description</Label>
                 <Textarea
                   id="project-description"
-                  value={projectDescription}
-                  onChange={(e) => setProjectDescription(e.target.value)}
+                  value={project.description}
+                  onChange={(e) =>
+                    setProject({ ...project, description: e.target.value })
+                  }
                   className="min-h-[100px]"
                 />
               </div>
@@ -262,7 +273,7 @@ export default function SettingsPage() {
             <CardContent>
               <ScrollArea className="h-[250px] pr-4">
                 <div className="space-y-3">
-                  {teamMembers.map((member) => (
+                  {project.teamMembers.map((member) => (
                     <div
                       key={member.id}
                       className="flex items-center justify-between rounded-md border p-3"
@@ -317,7 +328,11 @@ export default function SettingsPage() {
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={confirmRemoveMember}>
+              <Button
+                variant="destructive"
+                onClick={confirmRemoveMember}
+                disabled={!memberToRemove}
+              >
                 Remove
               </Button>
             </DialogFooter>
@@ -327,45 +342,38 @@ export default function SettingsPage() {
         {/* Add Member Dialog */}
         <Dialog
           open={addMemberDialogOpen}
-          onOpenChange={handleDialogOpenChange}
+          onOpenChange={setAddMemberDialogOpen}
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Add Team Member</DialogTitle>
               <DialogDescription>
-                Search for users by name or username to add them to your
-                project.
+                Search for users to add to this project.
               </DialogDescription>
             </DialogHeader>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="space-y-4">
               <Input
-                placeholder="Search users..."
-                className="pl-9"
+                type="text"
+                placeholder="Search by name or username"
                 value={searchQuery}
                 onChange={handleSearch}
+                disabled={isSearching}
               />
-            </div>
-            <div className="min-h-[200px] max-h-[300px] overflow-y-auto mt-2">
               {isSearching ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : searchResults.length > 0 ? (
+                <p>Searching...</p>
+              ) : (
                 <div className="space-y-2">
                   {searchResults.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between rounded-md border p-3 cursor-pointer hover:bg-muted"
-                      onClick={() => addMember(user)}
+                      className="flex items-center justify-between"
                     >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
+                      <div className="flex items-center gap-2">
+                        <Avatar>
                           <AvatarImage
                             src={user.avatar || "/placeholder.svg"}
                             alt={user.name}
                           />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium">{user.name}</p>
@@ -374,35 +382,18 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
-                      <Check className="h-4 w-4 text-muted-foreground" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addMember(user)}
+                      >
+                        Add
+                      </Button>
                     </div>
                   ))}
                 </div>
-              ) : searchQuery.length > 1 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No users found
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Try a different search term
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Type at least 2 characters to search
-                  </p>
-                </div>
               )}
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setAddMemberDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

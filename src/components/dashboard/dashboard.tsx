@@ -1,89 +1,85 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import {
-  ChartContainer,
-  ChartTooltipContent,
-  ChartTooltip,
-} from "@/components/ui/chart";
-import {
-  AlertTriangle,
-  CheckCircle,
-  FileCode,
   ThumbsDown,
   ThumbsUp,
+  CheckCircle,
+  FileCode,
+  AlertTriangle,
 } from "lucide-react";
 import RecentProjects from "@/components/dashboard/recent-projects";
 import CodeSmellPieChart from "./custom-piechart";
+import Cookies from "js-cookie";
 
-// Dummy data for the dashboard
-const DUMMY_DATA = {
-  totalProjects: 42,
-  totalCodeSmells: 156,
-  qualityScore: 78,
-  codeSmellTypes: [
-    { name: "Duplicate Code", value: 35, color: "#2563eb" }, // blue-600
-    { name: "Long Method", value: 25, color: "#3b82f6" }, // blue-500
-    { name: "Complex Conditional", value: 18, color: "#60a5fa" }, // blue-400
-    { name: "Dead Code", value: 12, color: "#93c5fd" }, // blue-300
-    { name: "Large Class", value: 10, color: "#bfdbfe" }, // blue-200
-  ],
-  recentProjects: [
-    {
-      id: 1,
-      name: "E-commerce Platform",
-      date: "2023-04-20",
-      smells: 12,
-      quality: 85,
-    },
-    { id: 2, name: "CRM System", date: "2023-04-18", smells: 24, quality: 62 },
-    {
-      id: 3,
-      name: "Mobile App Backend",
-      date: "2023-04-15",
-      smells: 8,
-      quality: 91,
-    },
-    {
-      id: 4,
-      name: "Analytics Dashboard",
-      date: "2023-04-10",
-      smells: 18,
-      quality: 73,
-    },
-    {
-      id: 5,
-      name: "Payment Gateway",
-      date: "2023-04-05",
-      smells: 15,
-      quality: 79,
-    },
-  ],
+// Custom hook to fetch data with authentication
+const useDashboardData = () => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = Cookies.get("token"); // Retrieve token from cookies
+
+      if (!token) {
+        setError("Authentication token is missing.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/api/v1/project/dashboard-stats",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setData(response.data);
+      } catch (err: any) {
+        setError("Error fetching data: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return { data, loading, error };
 };
 
 export default function Dashboard() {
-  // Use dummy data directly instead of loading it asynchronously
-  const data = DUMMY_DATA;
+  const { data, loading, error } = useDashboardData();
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   const getQualityStatus = (score: number) => {
     if (score >= 80)
       return { status: "Good", icon: ThumbsUp, color: "text-green-500" };
     if (score >= 60)
       return { status: "Average", icon: CheckCircle, color: "text-yellow-500" };
-    return { status: "Poor", icon: ThumbsDown, color: "text-red-500" };
+    // return { status: "Poor", icon: ThumbsDown, color: "text-red-500" };
+    return { status: "Good", icon: ThumbsUp, color: "text-green-500" };
   };
 
-  const qualityInfo = getQualityStatus(data.qualityScore);
+  const qualityInfo = data.data.codeQuality
+    ? getQualityStatus(data.data.codeQuality)
+    : { status: "New", icon: CheckCircle, color: "text-green-500" };
 
   return (
-    <div className="p-6 space-y-8 container mx-auto px-16">
+    <div className="p-6 space-y-8 container mx-auto px-16 dark:bg-[#040820]">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
 
       {/* Key Metrics */}
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-blue-100 shadow-md">
+        <Card className=" dark:bg-[#0F172A] shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-medium ">
               Total Projects
@@ -91,12 +87,12 @@ export default function Dashboard() {
             <FileCode className="h-5 w-5 " />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold ">{data.totalProjects}</div>
+            <div className="text-3xl font-bold ">{data.data.totalProjects}</div>
             <p className="text-sm ">Across all repositories</p>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-100 shadow-md">
+        <Card className=" dark:bg-[#0F172A] shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-medium ">
               Total Code Smells
@@ -104,51 +100,60 @@ export default function Dashboard() {
             <AlertTriangle className="h-5 w-5 " />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold ">{data.totalCodeSmells}</div>
+            <div className="text-3xl font-bold ">{data.data.totalSmells}</div>
             <p className="text-sm ">Detected issues requiring attention</p>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-100 shadow-md">
+        <Card className=" dark:bg-[#0F172A] shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-medium ">Code Quality</CardTitle>
             <qualityInfo.icon className={`h-5 w-5 ${qualityInfo.color}`} />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-3xl font-bold text-blue-900">
-                {data.qualityScore}/100
+            {data.data.codeQuality ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="text-3xl font-bold text-blue-900">
+                    {data.data.codeQuality}/100
+                  </div>
+
+                  <Badge
+                    className={
+                      data.data.codeQuality >= 80
+                        ? "bg-green-600 dark:bg-[#3a4255] text-white text-sm px-2 py-1"
+                        : data.data.codeQuality >= 60
+                        ? "bg-yellow-400 hover:bg-yellow-500 dark:bg-[#3a4255] text-black text-sm px-2 py-1"
+                        : "bg-red-500 hover:bg-red-600 dark:bg-[#3a4255] text-white text-sm px-2 py-1"
+                    }
+                  >
+                    {qualityInfo.status}
+                  </Badge>
+                </div>
+                <p className="text-sm ">Overall code health score</p>
+              </>
+            ) : (
+              <div className="text-2xl font-bold text-black-900">
+                No projects uploaded
               </div>
-              <Badge
-                className={
-                  data.qualityScore >= 80
-                    ? "bg-green-600 text-white text-sm px-2 py-1"
-                    : data.qualityScore >= 60
-                    ? "bg-yellow-400 hover:bg-yellow-500 text-black text-sm px-2 py-1"
-                    : "bg-red-500 hover:bg-red-600 text-white text-sm px-2 py-1"
-                }
-              >
-                {qualityInfo.status}
-              </Badge>
-            </div>
-            <p className="text-sm ">Overall code health score</p>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Combined Chart and Recent Projects Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <CodeSmellPieChart />
+      <div className="grid gap-6 lg:grid-cols-2 ">
+        <CodeSmellPieChart chartData={data.data.chartData} />
 
         {/* Recent Projects */}
-        <Card className="border-blue-100 shadow-md">
+        <Card className="shadow-md dark:bg-[#0F172A]">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">
               Recent Projects
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RecentProjects projects={data.recentProjects} />
+            <RecentProjects />
           </CardContent>
         </Card>
       </div>

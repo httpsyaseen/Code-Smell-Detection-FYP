@@ -5,10 +5,12 @@ import { ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import BenefitsSection from "@/components/landing/benefits";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   return (
-    <div className="flex min-h-screen flex-col px-14 mx-auto bg-gray-50">
+    <div className="flex min-h-screen flex-col px-14 mx-auto bg-gray-50 dark:bg-[#040820] dark:text-white">
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 bg-[#f3f6fb ]">
           <div className="container px-4 md:px-6 mx-auto">
@@ -30,7 +32,10 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button className="bg-[#126ed3] hover:bg-blue-700">
+                  <Button
+                    className="bg-[#126ed3] hover:bg-blue-700 text-white cursor-pointer"
+                    onClick={() => router.push("/login")}
+                  >
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -42,20 +47,20 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <div className="relative h-[350px] w-full overflow-hidden rounded-xl border bg-gradient-to-b from-blue-50 to-white p-4 shadow-xl">
-                  <div className="absolute inset-0 bg-grid-black/5 [mask-image:linear-gradient(to_bottom,white,transparent)]" />
-                  <div className="relative h-full w-full overflow-hidden rounded-lg border bg-white shadow-sm">
-                    <div className="flex h-10 items-center border-b bg-gray-50 px-4">
+                <div className="relative h-[350px] w-full overflow-hidden rounded-xl border bg-gradient-to-b from-blue-50 to-white p-4 shadow-xl dark:bg-[#040820]">
+                  <div className="absolute inset-0 bg-grid-black/5 [mask-image:linear-gradient(to_bottom,white,transparent)] dark:bg-[#0F172A] dark:[mask-image:linear-gradient(to_bottom,#040820,#3a4255)]" />
+                  <div className="relative h-full w-full overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-[#0F172A]">
+                    <div className="flex h-10 items-center border-b bg-gray-50 px-4 dark:bg-[#040820]">
                       <div className="flex space-x-2">
                         <div className="h-3 w-3 rounded-full bg-red-400" />
                         <div className="h-3 w-3 rounded-full bg-yellow-400" />
                         <div className="h-3 w-3 rounded-full bg-green-400" />
                       </div>
-                      <div className="ml-4 text-sm font-medium">
+                      <div className="ml-4 text-sm font-medium ">
                         CodeScent Analysis
                       </div>
                     </div>
-                    <div className="p-4 font-mono text-sm">
+                    <div className="p-4 font-mono text-sm dark:bg-[#040820]">
                       <motion.div
                         className="mb-2 text-blue-600"
                         initial={{ opacity: 0 }}
@@ -140,7 +145,7 @@ export default function Home() {
             >
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
-                  <div className="inline-block rounded-lg bg-blue-100 px-3 py-1 text-sm text-blue-600">
+                  <div className="inline-block rounded-lg bg-blue-100 dark:bg-[#126ed3] dark:text-white px-3 py-1 text-sm text-blue-600">
                     Real-time Analysis
                   </div>
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -196,7 +201,10 @@ export default function Home() {
                   </motion.li>
                 </ul>
                 <div>
-                  <Button className="bg-[#126ed3] hover:bg-blue-700">
+                  <Button
+                    className="bg-[#126ed3] hover:bg-blue-700 dark:text-white"
+                    onClick={() => router.push("/login")}
+                  >
                     Learn More
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -209,8 +217,8 @@ export default function Home() {
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
               >
-                <div className="relative h-[400px] w-full overflow-hidden rounded-xl border bg-white p-4 shadow-xl">
-                  <div className="flex h-10 items-center border-b bg-gray-50 px-4">
+                <div className="relative h-[400px] w-full overflow-hidden rounded-xl border bg-white p-4 shadow-xl dark:bg-[#0F172A]">
+                  <div className="flex h-10 items-center border-b bg-gray-50 px-4 dark:bg-[#0F172A]">
                     <div className="flex space-x-2">
                       <div className="h-3 w-3 rounded-full bg-red-400" />
                       <div className="h-3 w-3 rounded-full bg-yellow-400" />
@@ -220,14 +228,14 @@ export default function Home() {
                       Real-time Analysis
                     </div>
                   </div>
-                  <div className="p-4 font-mono text-sm">
+                  <div className="p-4 font-mono text-sm dark:bg-[#0F172A]">
                     <div className="flex items-center space-x-2">
                       <div className="h-4 w-4 rounded-full bg-green-500" />
                       <span>Code quality score: 85/100</span>
                     </div>
                     <div className="mt-4 space-y-2">
                       <motion.div
-                        className="rounded-md bg-yellow-50 p-2 text-yellow-800"
+                        className="rounded-md bg-yellow-50 p-2 text-yellow-800 dark:bg-[#040820]"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.5 }}
@@ -237,7 +245,7 @@ export default function Home() {
                         code detected in utils/helpers.js
                       </motion.div>
                       <motion.div
-                        className="rounded-md bg-red-50 p-2 text-red-800"
+                        className="rounded-md bg-red-50 p-2 text-red-800 dark:bg-[#040820]"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.7 }}
@@ -247,7 +255,7 @@ export default function Home() {
                         in components/Modal.jsx
                       </motion.div>
                       <motion.div
-                        className="rounded-md bg-blue-50 p-2 text-blue-800"
+                        className="rounded-md bg-blue-50 p-2 text-blue-800 dark:bg-[#040820]"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ duration: 0.3, delay: 0.9 }}

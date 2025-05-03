@@ -61,7 +61,7 @@ export default function Page() {
     const delayDebounce = setTimeout(async () => {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/v1/check-username/${username}`
+          `http://localhost:3000/api/v1/user/check-username/${username}`
         );
         const data = await res.json();
         console.log(data);
@@ -96,7 +96,7 @@ export default function Page() {
       }
 
       const response = await axios.post(
-        "http://localhost:3000/api/v1/signup",
+        "http://localhost:3000/api/v1/user/signup",
         formData,
         {
           headers: {
@@ -125,8 +125,8 @@ export default function Page() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100">
-      <Card className="w-md shadow-lg border-0">
+    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-gray-100 dark:bg-[#040820] ">
+      <Card className="w-md shadow-lg border-0 dark:bg-[#0F172A] my-8">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-2xl font-bold text-center">
             Create an Account
@@ -156,7 +156,7 @@ export default function Page() {
                   placeholder="johndoe123"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -201,7 +201,7 @@ export default function Page() {
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -222,7 +222,7 @@ export default function Page() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -233,14 +233,15 @@ export default function Page() {
             <div className="space-y-2">
               <Label
                 htmlFor="photo"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 dark:text-white"
               >
                 Upload Photo
               </Label>
-              <div className="relative flex items-center gap-4 p-4 bg-gray-50 border border-gray-300 rounded-lg hover:border-blue-500 transition-colors">
+              <div className="relative flex items-center gap-4 p-4 bg-gray-50 border border-gray-300 rounded-lg hover:border-blue-500 transition-colors dark:bg-[#e5efff0d] ">
                 <Input
                   id="photo"
                   name="photo"
+                  className="dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
@@ -259,12 +260,11 @@ export default function Page() {
                       setPhotoPreview(null);
                     }
                   }}
-                  className="hidden"
                   disabled={isLoading}
                 />
                 <label
                   htmlFor="photo"
-                  className={`flex-1 cursor-pointer text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-md border border-blue-200 hover:bg-blue-100 transition-colors ${
+                  className={`flex-1 cursor-pointer text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-md border border-blue-200 hover:bg-blue-100 transition-colors dark:bg-[#e5efff0d] dark:placeholder:text-white ${
                     isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
@@ -299,7 +299,7 @@ export default function Page() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
@@ -337,7 +337,7 @@ export default function Page() {
                   placeholder="••••••••"
                   value={passwordConfirm}
                   onChange={(e) => setPasswordConfirm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 dark:bg-[#e5efff0d] dark:placeholder:text-white"
                   disabled={isLoading}
                   required
                 />
